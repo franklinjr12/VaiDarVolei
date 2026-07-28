@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f7f3e8"/>
+  <rect x="70" y="70" width="1060" height="490" rx="28" fill="#0f766e"/>
+  <circle cx="920" cy="315" r="150" fill="#f8fafc"/>
+  <path d="M790 315c75-14 132-70 176-148M827 455c29-122 88-207 184-253M774 360c104 8 191 43 272 104" fill="none" stroke="#0f766e" stroke-width="28" stroke-linecap="round"/>
+  <text x="120" y="250" fill="#f8fafc" font-family="Arial, sans-serif" font-size="88" font-weight="800">Vai Dar Volei?</text>
+  <text x="120" y="360" fill="#fef3c7" font-family="Arial, sans-serif" font-size="48" font-weight="700">Sera que hoje da jogo?</text>
+</svg>
