@@ -22,7 +22,7 @@ export function createVerdict(
     return {
       verdict: "BAD",
       score: 0,
-      phrase: options.phrase ?? "HOJE JA FOI.",
+      phrase: "HOJE JA FOI.",
       explanation: "Ja nao sobrou uma janela boa de 2 horas hoje.",
       averageTemperature: average(remaining.map((hour) => hour.hour.temperature)),
       maxRainProbability: max(remaining.map((hour) => hour.hour.precipitationProbability)),
