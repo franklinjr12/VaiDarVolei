@@ -47,7 +47,8 @@ export async function fetchWeatherForecast(
 
 export function normalizeForecast(data: ForecastApiResponse): HourlyWeather[] {
   const hourly = data.hourly;
-  if (!hourly || !Array.isArray(hourly.time)) throw new Error("Weather response missing hourly data");
+  if (!hourly || !Array.isArray(hourly.time))
+    throw new Error("Weather response missing hourly data");
 
   validateNumberArray(hourly.temperature_2m, "temperature_2m", hourly.time.length);
   validateNumberArray(hourly.apparent_temperature, "apparent_temperature", hourly.time.length);
@@ -80,8 +81,16 @@ export function normalizeForecast(data: ForecastApiResponse): HourlyWeather[] {
   });
 }
 
-function validateNumberArray(value: unknown, label: string, expectedLength: number): asserts value is number[] {
-  if (!Array.isArray(value) || value.length !== expectedLength || value.some((item) => typeof item !== "number")) {
+function validateNumberArray(
+  value: unknown,
+  label: string,
+  expectedLength: number,
+): asserts value is number[] {
+  if (
+    !Array.isArray(value) ||
+    value.length !== expectedLength ||
+    value.some((item) => typeof item !== "number")
+  ) {
     throw new Error(`Weather response has invalid ${label}`);
   }
 }

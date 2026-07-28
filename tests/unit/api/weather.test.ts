@@ -5,7 +5,10 @@ describe("weather API", () => {
   it("requests only today's required hourly fields", async () => {
     const fetcher = vi.fn(async () => Response.json(validResponse()));
 
-    await fetchWeatherForecast({ latitude: -25.4, longitude: -49.2 }, { fetcher: fetcher as unknown as typeof fetch });
+    await fetchWeatherForecast(
+      { latitude: -25.4, longitude: -49.2 },
+      { fetcher: fetcher as unknown as typeof fetch },
+    );
 
     const calls = fetcher.mock.calls as unknown as Array<[unknown]>;
     const url = new URL(String(calls[0]?.[0]));

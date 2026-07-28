@@ -12,7 +12,10 @@ type StoredWeatherCache = Omit<WeatherCache, "forecast"> & {
   forecast: Array<Omit<HourlyWeather, "timestamp"> & { timestamp: string }>;
 };
 
-export function saveSelectedLocation(location: SelectedLocation, storage = window.localStorage): void {
+export function saveSelectedLocation(
+  location: SelectedLocation,
+  storage = window.localStorage,
+): void {
   safeSet(storage, LOCATION_STORAGE_KEY, JSON.stringify(location));
 }
 

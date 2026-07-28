@@ -52,7 +52,8 @@ export function createVerdict(
 }
 
 export function explainWindow(window: PlayingWindow, verdict: Verdict): string {
-  if (window.thunderstorm) return "Tem trovoada na melhor janela disponivel. Melhor nao bancar o heroi.";
+  if (window.thunderstorm)
+    return "Tem trovoada na melhor janela disponivel. Melhor nao bancar o heroi.";
 
   const reasons = new Set(window.hours.flatMap((hour) => hour.reasons));
 

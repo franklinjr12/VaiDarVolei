@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { GOOD_PHRASES, MAYBE_PHRASES, BAD_PHRASES, getRandomPhrase } from "../../../src/domain/phrases";
+import {
+  GOOD_PHRASES,
+  MAYBE_PHRASES,
+  BAD_PHRASES,
+  getRandomPhrase,
+} from "../../../src/domain/phrases";
 import { createVerdict } from "../../../src/domain/verdict";
 import type { HourlyWeather } from "../../../src/domain/types";
 
@@ -18,10 +23,7 @@ describe("phrase catalog", () => {
 describe("verdict generation", () => {
   it("creates a GOOD verdict for a clean window", () => {
     const verdict = createVerdict(
-      [
-        weather("2026-07-28T15:00:00-03:00", {}),
-        weather("2026-07-28T16:00:00-03:00", {}),
-      ],
+      [weather("2026-07-28T15:00:00-03:00", {}), weather("2026-07-28T16:00:00-03:00", {})],
       { now: new Date("2026-07-28T14:00:00-03:00"), random: () => 0 },
     );
 
@@ -44,10 +46,9 @@ describe("verdict generation", () => {
   });
 
   it("returns a no-window result late in the day", () => {
-    const verdict = createVerdict(
-      [weather("2026-07-28T23:00:00-03:00", {})],
-      { now: new Date("2026-07-28T22:30:00-03:00") },
-    );
+    const verdict = createVerdict([weather("2026-07-28T23:00:00-03:00", {})], {
+      now: new Date("2026-07-28T22:30:00-03:00"),
+    });
 
     expect(verdict.noWindow).toBe(true);
     expect(verdict.phrase).toBe("HOJE JA FOI.");

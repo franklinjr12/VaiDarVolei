@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { WEATHER_CACHE_STORAGE_KEY } from "../../../src/config";
 import type { HourlyWeather, SelectedLocation } from "../../../src/domain/types";
 import { createGpsLocation } from "../../../src/services/geolocation";
-import { getSelectedLocation, getWeatherCache, saveSelectedLocation } from "../../../src/services/storage";
+import {
+  getSelectedLocation,
+  getWeatherCache,
+  saveSelectedLocation,
+} from "../../../src/services/storage";
 import { getCachedForecast, isCacheFresh, saveForecast } from "../../../src/services/weatherCache";
 
 const location: SelectedLocation = {
@@ -24,9 +28,9 @@ describe("weather cache", () => {
     [59 * 60 * 1000 + 59 * 1000, true],
     [60 * 60 * 1000 + 1000, false],
   ])("checks freshness for age %i", (age, expected) => {
-    expect(isCacheFresh({ locationKey: location.key, fetchedAt: 1000, forecast: [] }, 1000 + age)).toBe(
-      expected,
-    );
+    expect(
+      isCacheFresh({ locationKey: location.key, fetchedAt: 1000, forecast: [] }, 1000 + age),
+    ).toBe(expected);
   });
 
   it("uses cache for the same location only", () => {

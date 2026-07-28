@@ -5,7 +5,12 @@ import { createVerdict } from "./domain/verdict";
 import { scoreForecast } from "./domain/scoring";
 import { getBrowserLocation } from "./services/geolocation";
 import { shareVerdict } from "./services/sharing";
-import { clearSelectedLocation, getSelectedLocation, saveSelectedLocation, type WeatherCache } from "./services/storage";
+import {
+  clearSelectedLocation,
+  getSelectedLocation,
+  saveSelectedLocation,
+  type WeatherCache,
+} from "./services/storage";
 import { getCachedForecast, isCacheFresh, saveForecast } from "./services/weatherCache";
 import { debounce } from "./utils/debounce";
 import { formatHour, formatHourRange, formatTimeAgo } from "./utils/date";
@@ -103,7 +108,10 @@ function renderLocationScreen(root: HTMLElement, message = ""): void {
       const cities = await searchCities(query, { signal: searchState.controller.signal });
       if (sequence !== searchState.sequence) return;
       renderCityResults(root, results, cities);
-      setText(status, cities.length > 0 ? "Escolha uma cidade da lista." : "Nao encontrei essa cidade.");
+      setText(
+        status,
+        cities.length > 0 ? "Escolha uma cidade da lista." : "Nao encontrei essa cidade.",
+      );
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       setText(status, "Nao deu para buscar agora. Tenta de novo em instantes.");
@@ -113,7 +121,11 @@ function renderLocationScreen(root: HTMLElement, message = ""): void {
   input?.addEventListener("input", () => runSearch(input.value));
 }
 
-function renderCityResults(root: HTMLElement, container: HTMLElement, cities: SelectedLocation[]): void {
+function renderCityResults(
+  root: HTMLElement,
+  container: HTMLElement,
+  cities: SelectedLocation[],
+): void {
   root.querySelector(".search-box")?.setAttribute("aria-expanded", String(cities.length > 0));
   container.innerHTML = cities
     .map(
