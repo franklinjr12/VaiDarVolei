@@ -23,22 +23,22 @@ describe("phrase catalog", () => {
 describe("verdict generation", () => {
   it("creates a GOOD verdict for a clean window", () => {
     const verdict = createVerdict(
-      [weather("2026-07-28T15:00:00-03:00", {}), weather("2026-07-28T16:00:00-03:00", {})],
-      { now: new Date("2026-07-28T14:00:00-03:00"), random: () => 0 },
+      [weather("2026-07-28T15:00:00Z", {}), weather("2026-07-28T16:00:00Z", {})],
+      { now: new Date("2026-07-28T14:00:00Z"), random: () => 0 },
     );
 
     expect(verdict.verdict).toBe("GOOD");
-    expect(verdict.bestWindow?.start.getHours()).toBe(15);
+    expect(verdict.bestWindow?.start.getUTCHours()).toBe(15);
     expect(verdict.noWindow).toBe(false);
   });
 
   it("does not allow thunderstorm windows to be GOOD", () => {
     const verdict = createVerdict(
       [
-        weather("2026-07-28T15:00:00-03:00", { weatherCode: 95 }),
-        weather("2026-07-28T16:00:00-03:00", {}),
+        weather("2026-07-28T15:00:00Z", { weatherCode: 95 }),
+        weather("2026-07-28T16:00:00Z", {}),
       ],
-      { now: new Date("2026-07-28T14:00:00-03:00") },
+      { now: new Date("2026-07-28T14:00:00Z") },
     );
 
     expect(verdict.verdict).toBe("BAD");
@@ -46,8 +46,8 @@ describe("verdict generation", () => {
   });
 
   it("returns a no-window result late in the day", () => {
-    const verdict = createVerdict([weather("2026-07-28T23:00:00-03:00", {})], {
-      now: new Date("2026-07-28T22:30:00-03:00"),
+    const verdict = createVerdict([weather("2026-07-28T23:00:00Z", {})], {
+      now: new Date("2026-07-28T22:30:00Z"),
     });
 
     expect(verdict.noWindow).toBe(true);
