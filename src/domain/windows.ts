@@ -1,45 +1,23 @@
 import type { HourScore, PlayingWindow } from "./types";
 
 const HOUR_MS = 60 * 60 * 1000;
-const MINIMUM_THIRD_HOUR_SCORE = 60;
 
-export function nextPlayableHour(now = new Date()): Date {
-  const next = new Date(now);
-  next.setMinutes(0, 0, 0);
-
-  if (now.getMinutes() > 0 || now.getSeconds() > 0 || now.getMilliseconds() > 0) {
-    next.setHours(next.getHours() + 1);
-  }
-
-  return next;
+export function currentForecastHour(now = new Date()): Date {
+  const current = new Date(now);
+  current.setMinutes(0, 0, 0);
+  return current;
 }
 
-export function findBestWindow(hours: HourScore[], now = new Date()): PlayingWindow | null {
-  const available = hours
-    .filter((hour) => hour.hour.timestamp.getTime() >= nextPlayableHour(now).getTime())
-    .sort((a, b) => a.hour.timestamp.getTime() - b.hour.timestamp.getTime());
+export function findCurrentWindow(hours: HourScore[], now = new Date()): PlayingWindow | null {
+  const start = currentForecastHour(now).getTime();
+  const end = start + HOUR_MS;
+  const available = new Map(hours.map((hour) => [hour.hour.timestamp.getTime(), hour]));
 
-  const candidates: PlayingWindow[] = [];
+  const first = available.get(start);
+  const second = available.get(end);
+  if (!first || !second || !areConsecutive(first, second)) return null;
 
-  for (let index = 0; index < available.length - 1; index += 1) {
-    const first = available[index];
-    const second = available[index + 1];
-
-    if (!first || !second || !areConsecutive(first, second)) continue;
-
-    const windowHours = [first, second];
-    const third = available[index + 2];
-
-    if (third && areConsecutive(second, third) && third.score >= MINIMUM_THIRD_HOUR_SCORE) {
-      windowHours.push(third);
-    }
-
-    candidates.push(toPlayingWindow(windowHours));
-  }
-
-  if (candidates.length === 0) return null;
-
-  return candidates.sort((a, b) => b.averageScore - a.averageScore)[0] ?? null;
+  return toPlayingWindow([first, second]);
 }
 
 function areConsecutive(first: HourScore, second: HourScore): boolean {

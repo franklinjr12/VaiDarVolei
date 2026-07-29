@@ -24,34 +24,48 @@ describe("verdict generation", () => {
   it("creates a GOOD verdict for a clean window", () => {
     const verdict = createVerdict(
       [weather("2026-07-28T15:00:00Z", {}), weather("2026-07-28T16:00:00Z", {})],
-      { now: new Date("2026-07-28T14:00:00Z"), random: () => 0 },
+      { now: new Date("2026-07-28T15:00:00Z"), random: () => 0 },
     );
 
     expect(verdict.verdict).toBe("GOOD");
-    expect(verdict.bestWindow?.start.getUTCHours()).toBe(15);
+    expect(verdict.playWindow?.start.getUTCHours()).toBe(15);
     expect(verdict.noWindow).toBe(false);
+  });
+
+  it("uses rainy next 2 hours even when later hours are clear", () => {
+    const verdict = createVerdict(
+      [
+        weather("2026-07-28T14:00:00Z", { precipitationProbability: 95, precipitation: 2 }),
+        weather("2026-07-28T15:00:00Z", { precipitationProbability: 90, precipitation: 1 }),
+        weather("2026-07-28T16:00:00Z", {}),
+        weather("2026-07-28T17:00:00Z", {}),
+      ],
+      { now: new Date("2026-07-28T14:25:00Z"), random: () => 0 },
+    );
+
+    expect(verdict.verdict).toBe("BAD");
+    expect(verdict.playWindow?.start.getUTCHours()).toBe(14);
+    expect(verdict.explanation).toBe("Chuva nas proximas 2 horas. Melhor esperar abrir.");
   });
 
   it("does not allow thunderstorm windows to be GOOD", () => {
     const verdict = createVerdict(
-      [
-        weather("2026-07-28T15:00:00Z", { weatherCode: 95 }),
-        weather("2026-07-28T16:00:00Z", {}),
-      ],
-      { now: new Date("2026-07-28T14:00:00Z") },
+      [weather("2026-07-28T15:00:00Z", { weatherCode: 95 }), weather("2026-07-28T16:00:00Z", {})],
+      { now: new Date("2026-07-28T15:00:00Z") },
     );
 
     expect(verdict.verdict).toBe("BAD");
     expect(verdict.thunderstorm).toBe(true);
+    expect(verdict.noWindow).toBe(false);
   });
 
-  it("returns a no-window result late in the day", () => {
+  it("returns a no-window result when the next 2 hours are incomplete", () => {
     const verdict = createVerdict([weather("2026-07-28T23:00:00Z", {})], {
       now: new Date("2026-07-28T22:30:00Z"),
     });
 
     expect(verdict.noWindow).toBe(true);
-    expect(verdict.phrase).toBe("HOJE JA FOI.");
+    expect(verdict.phrase).toBe("NAO TEM PREVISAO SUFICIENTE.");
   });
 });
 

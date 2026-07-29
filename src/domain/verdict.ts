@@ -1,7 +1,7 @@
 import { getRandomPhrase } from "./phrases";
 import { scoreForecast } from "./scoring";
 import type { HourlyWeather, HourScore, PlayingWindow, Verdict, VolleyballVerdict } from "./types";
-import { findBestWindow } from "./windows";
+import { currentForecastHour, findCurrentWindow } from "./windows";
 
 export function classifyWindow(window: PlayingWindow): Verdict {
   if (window.thunderstorm) return "BAD";
@@ -12,66 +12,76 @@ export function classifyWindow(window: PlayingWindow): Verdict {
 
 export function createVerdict(
   forecast: HourlyWeather[],
-  options: { now?: Date; phrase?: string; random?: () => number } = {},
+  options: { now?: Date; random?: () => number } = {},
 ): VolleyballVerdict {
   const scoredHours = scoreForecast(forecast);
-  const bestWindow = findBestWindow(scoredHours, options.now);
+  const playWindow = findCurrentWindow(scoredHours, options.now);
 
-  if (!bestWindow) {
-    const remaining = remainingHours(scoredHours, options.now);
+  if (!playWindow) {
+    const upcoming = upcomingHours(scoredHours, options.now);
     return {
       verdict: "BAD",
       score: 0,
-      phrase: "HOJE JA FOI.",
-      explanation: "Ja nao sobrou uma janela boa de 2 horas hoje.",
-      averageTemperature: average(remaining.map((hour) => hour.hour.temperature)),
-      maxRainProbability: max(remaining.map((hour) => hour.hour.precipitationProbability)),
-      averageWindSpeed: average(remaining.map((hour) => hour.hour.windSpeed)),
-      thunderstorm: remaining.some((hour) => hour.unsafeWeather),
+      phrase: "NAO TEM PREVISAO SUFICIENTE.",
+      explanation: "Nao tenho previsao suficiente para as proximas 2 horas.",
+      averageTemperature: average(upcoming.map((hour) => hour.hour.temperature)),
+      maxRainProbability: max(upcoming.map((hour) => hour.hour.precipitationProbability)),
+      averageWindSpeed: average(upcoming.map((hour) => hour.hour.windSpeed)),
+      thunderstorm: upcoming.some((hour) => hour.unsafeWeather),
       noWindow: true,
     };
   }
 
-  const verdict = classifyWindow(bestWindow);
+  const verdict = classifyWindow(playWindow);
 
   return {
     verdict,
-    score: bestWindow.averageScore,
-    phrase: options.phrase ?? getRandomPhrase(verdict, options.random),
-    explanation: explainWindow(bestWindow, verdict),
-    bestWindow: {
-      start: bestWindow.start,
-      end: bestWindow.end,
+    score: playWindow.averageScore,
+    phrase: getRandomPhrase(verdict, options.random),
+    explanation: explainWindow(playWindow, verdict),
+    playWindow: {
+      start: playWindow.start,
+      end: playWindow.end,
     },
-    averageTemperature: average(bestWindow.hours.map((hour) => hour.hour.temperature)),
-    maxRainProbability: max(bestWindow.hours.map((hour) => hour.hour.precipitationProbability)),
-    averageWindSpeed: average(bestWindow.hours.map((hour) => hour.hour.windSpeed)),
-    thunderstorm: bestWindow.thunderstorm,
+    averageTemperature: average(playWindow.hours.map((hour) => hour.hour.temperature)),
+    maxRainProbability: max(playWindow.hours.map((hour) => hour.hour.precipitationProbability)),
+    averageWindSpeed: average(playWindow.hours.map((hour) => hour.hour.windSpeed)),
+    thunderstorm: playWindow.thunderstorm,
     noWindow: false,
   };
 }
 
 export function explainWindow(window: PlayingWindow, verdict: Verdict): string {
-  if (window.thunderstorm)
-    return "Tem trovoada na melhor janela disponivel. Melhor nao bancar o heroi.";
+  if (window.thunderstorm) return "Tem trovoada nas proximas 2 horas. Melhor nao bancar o heroi.";
 
   const reasons = new Set(window.hours.flatMap((hour) => hour.reasons));
 
   if (verdict === "GOOD") {
-    if (reasons.size === 0) return "Pouca chance de chuva e vento tranquilo.";
-    return "A melhor janela esta boa, so fica de olho nos detalhes do clima.";
+    if (reasons.size === 0) return "Pouca chance de chuva e vento tranquilo nas proximas 2 horas.";
+    return "As proximas 2 horas estao boas, so fica de olho nos detalhes do clima.";
   }
 
-  if (reasons.has("chuva")) return "Da jogo, mas existe chance de chuva no caminho.";
-  if (reasons.has("vento")) return "O vento pode incomodar as manchetes e os saques.";
-  if (reasons.has("calor")) return "O calor vai pedir agua, sombra e protetor.";
-  if (reasons.has("frio")) return "Esta mais frio que o ideal para uma partida tranquila.";
+  if (verdict === "BAD") {
+    if (reasons.has("chuva")) return "Chuva nas proximas 2 horas. Melhor esperar abrir.";
+    if (reasons.has("vento")) return "Vento forte nas proximas 2 horas. A bola vai sofrer.";
+    if (reasons.has("calor")) return "Calor pesado nas proximas 2 horas. Melhor esperar aliviar.";
+    if (reasons.has("frio")) return "Frio demais nas proximas 2 horas para uma partida tranquila.";
+  }
 
-  return "A previsao nao esta perfeita, mas ainda da para arriscar.";
+  if (reasons.has("chuva")) return "Da jogo, mas existe chance de chuva nas proximas 2 horas.";
+  if (reasons.has("vento")) return "O vento pode incomodar nas proximas 2 horas.";
+  if (reasons.has("calor"))
+    return "O calor nas proximas 2 horas vai pedir agua, sombra e protetor.";
+  if (reasons.has("frio"))
+    return "Esta mais frio que o ideal nas proximas 2 horas para uma partida tranquila.";
+
+  return "A previsao das proximas 2 horas nao esta perfeita, mas ainda da para arriscar.";
 }
 
-function remainingHours(hours: HourScore[], now = new Date()): HourScore[] {
-  return hours.filter((hour) => hour.hour.timestamp.getTime() >= now.getTime());
+function upcomingHours(hours: HourScore[], now = new Date()): HourScore[] {
+  return hours.filter(
+    (hour) => hour.hour.timestamp.getTime() >= currentForecastHour(now).getTime(),
+  );
 }
 
 function average(values: number[]): number {

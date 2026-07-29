@@ -7,9 +7,9 @@ export interface ShareResult {
 }
 
 export function buildShareText(verdict: VolleyballVerdict, location: SelectedLocation): string {
-  const windowText = verdict.bestWindow
-    ? `Melhor horario: ${formatHourRange(verdict.bestWindow.start, verdict.bestWindow.end)}`
-    : "Hoje ja foi.";
+  const windowText = verdict.playWindow
+    ? `Proximas 2 horas: ${formatHourRange(verdict.playWindow.start, verdict.playWindow.end)}`
+    : "Sem previsao suficiente para as proximas 2 horas.";
 
   return [
     "Vai Dar Volei?",

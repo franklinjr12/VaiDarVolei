@@ -26,14 +26,14 @@ interface ForecastApiResponse {
 
 export async function fetchWeatherForecast(
   location: Pick<SelectedLocation, "latitude" | "longitude">,
-  options: { signal?: AbortSignal; fetcher?: typeof fetch } = {},
+  options: { signal?: AbortSignal; fetcher?: typeof fetch; timezone?: string } = {},
 ): Promise<HourlyWeather[]> {
   const fetcher = options.fetcher ?? fetch;
   const url = new URL(OPEN_METEO_FORECAST_URL);
   url.searchParams.set("latitude", String(location.latitude));
   url.searchParams.set("longitude", String(location.longitude));
-  url.searchParams.set("forecast_days", "1");
-  url.searchParams.set("timezone", "auto");
+  url.searchParams.set("forecast_hours", "2");
+  url.searchParams.set("timezone", options.timezone ?? browserTimezone());
   url.searchParams.set("temperature_unit", "celsius");
   url.searchParams.set("wind_speed_unit", "kmh");
   url.searchParams.set("precipitation_unit", "mm");
@@ -43,6 +43,10 @@ export async function fetchWeatherForecast(
   if (!response.ok) throw new Error(`Weather request failed with ${response.status}`);
 
   return normalizeForecast((await response.json()) as ForecastApiResponse);
+}
+
+function browserTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "auto";
 }
 
 export function normalizeForecast(data: ForecastApiResponse): HourlyWeather[] {

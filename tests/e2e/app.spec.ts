@@ -18,7 +18,7 @@ test("first visit with GPS saves location and weather cache", async ({ page, con
   await page.goto("/");
   await page.getByRole("button", { name: /Usar minha localizacao/ }).click();
 
-  await expect(page.getByText("Melhor horario")).toBeVisible();
+  await expect(page.getByText("Proximas 2 horas", { exact: true })).toBeVisible();
   await expect(page.getByText("Sua localizacao")).toBeVisible();
   expect(forecastRequests).toBe(1);
 
@@ -42,6 +42,15 @@ test("returning user reuses fresh cache without a weather request", async ({ pag
   await expect(page.getByText("Curitiba, Parana")).toBeVisible();
   await expect(page.getByText(/cache ativo/)).toBeVisible();
   expect(forecastRequests).toBe(0);
+});
+
+test("rain now beats clear weather later in the day", async ({ page }) => {
+  await seedCachedForecast(page, { ageMinutes: 20, forecast: rainyNowForecast() });
+
+  await page.goto("/");
+
+  await expect(page.getByText("Proximas 2 horas", { exact: true })).toBeVisible();
+  await expect(page.getByText("Chuva nas proximas 2 horas. Melhor esperar abrir.")).toBeVisible();
 });
 
 test("expired cache fetches weather once", async ({ page }) => {
@@ -142,7 +151,10 @@ async function mockGeocoding(page: Page): Promise<void> {
   });
 }
 
-async function seedCachedForecast(page: Page, options: { ageMinutes: number }): Promise<void> {
+async function seedCachedForecast(
+  page: Page,
+  options: { ageMinutes: number; forecast?: ReturnType<typeof storedForecast> },
+): Promise<void> {
   await page.addInitScript(
     ({ ageMinutes, now, forecast }) => {
       localStorage.setItem(
@@ -169,7 +181,7 @@ async function seedCachedForecast(page: Page, options: { ageMinutes: number }): 
     {
       ageMinutes: options.ageMinutes,
       now: FIXED_NOW.getTime(),
-      forecast: storedForecast(),
+      forecast: options.forecast ?? storedForecast(),
     },
   );
 }
@@ -177,7 +189,7 @@ async function seedCachedForecast(page: Page, options: { ageMinutes: number }): 
 function forecastResponse() {
   return {
     hourly: {
-      time: ["2026-07-28T15:00", "2026-07-28T16:00", "2026-07-28T17:00", "2026-07-28T18:00"],
+      time: ["2026-07-28T14:00", "2026-07-28T15:00", "2026-07-28T16:00", "2026-07-28T17:00"],
       temperature_2m: [24, 25, 25, 24],
       apparent_temperature: [24, 25, 25, 24],
       precipitation_probability: [8, 8, 12, 18],
@@ -186,6 +198,38 @@ function forecastResponse() {
       wind_speed_10m: [10, 12, 13, 12],
       wind_gusts_10m: [15, 18, 20, 18],
     },
+  };
+}
+
+function rainyNowForecast() {
+  return [
+    storedHour("2026-07-28T14:00:00.000-03:00", {
+      precipitationProbability: 95,
+      precipitation: 2,
+    }),
+    storedHour("2026-07-28T15:00:00.000-03:00", {
+      precipitationProbability: 90,
+      precipitation: 1,
+    }),
+    storedHour("2026-07-28T16:00:00.000-03:00", {}),
+    storedHour("2026-07-28T17:00:00.000-03:00", {}),
+  ];
+}
+
+function storedHour(
+  timestamp: string,
+  overrides: Partial<ReturnType<typeof storedForecast>[number]>,
+) {
+  return {
+    timestamp,
+    temperature: 24,
+    apparentTemperature: 24,
+    precipitationProbability: 0,
+    precipitation: 0,
+    weatherCode: 1,
+    windSpeed: 10,
+    windGusts: 15,
+    ...overrides,
   };
 }
 

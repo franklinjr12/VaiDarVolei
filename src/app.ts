@@ -3,6 +3,7 @@ import { fetchWeatherForecast } from "./api/weather";
 import type { HourlyWeather, HourScore, SelectedLocation, VolleyballVerdict } from "./domain/types";
 import { createVerdict } from "./domain/verdict";
 import { scoreForecast } from "./domain/scoring";
+import { currentForecastHour } from "./domain/windows";
 import { getBrowserLocation } from "./services/geolocation";
 import { shareVerdict } from "./services/sharing";
 import {
@@ -165,8 +166,7 @@ async function loadForecast(
 
   try {
     const forecast = await fetchForecastOnce(location);
-    const verdict = createVerdict(forecast);
-    const cache = saveForecast(location, forecast, { phrase: verdict.phrase });
+    const cache = saveForecast(location, forecast);
     renderResult(root, location, cache, { fromCache: false });
   } catch {
     if (staleCache) {
@@ -237,10 +237,15 @@ function renderResult(
   cache: WeatherCache,
   options: { fromCache: boolean; staleWarning?: string },
 ): void {
-  const verdict = createVerdict(cache.forecast, { phrase: cache.phrase });
-  const scoredHours = scoreForecast(cache.forecast).filter(
-    (hour) => hour.hour.timestamp.getTime() >= new Date().getTime(),
-  );
+  const verdict = createVerdict(cache.forecast);
+  const scoredHours = scoreForecast(cache.forecast).filter((hour) => {
+    const timestamp = hour.hour.timestamp.getTime();
+    if (!verdict.playWindow) return timestamp >= currentForecastHour().getTime();
+    return (
+      timestamp >= verdict.playWindow.start.getTime() &&
+      timestamp < verdict.playWindow.end.getTime()
+    );
+  });
   const toneClass = verdict.verdict.toLowerCase();
 
   root.innerHTML = `
@@ -266,8 +271,8 @@ function renderResult(
         </div>
 
         <div class="best-window">
-          <span>Melhor horario</span>
-          <strong>${verdict.bestWindow ? formatHourRange(verdict.bestWindow.start, verdict.bestWindow.end) : "Sem janela"}</strong>
+          <span>Proximas 2 horas</span>
+          <strong>${verdict.playWindow ? formatHourRange(verdict.playWindow.start, verdict.playWindow.end) : "Sem janela"}</strong>
         </div>
 
         <p class="explanation">${escapeHtml(verdict.explanation)}</p>
@@ -281,7 +286,7 @@ function renderResult(
         </div>
 
         <section class="details" hidden>
-          <h2>Proximas horas</h2>
+          <h2>Agora e proxima hora</h2>
           <div class="hour-list">
             ${renderHours(scoredHours)}
           </div>
@@ -326,7 +331,8 @@ function renderResult(
 }
 
 function renderHours(hours: HourScore[]): string {
-  if (hours.length === 0) return `<p class="empty">Nao sobrou previsao util para hoje.</p>`;
+  if (hours.length === 0)
+    return `<p class="empty">Nao tenho previsao suficiente para as proximas 2 horas.</p>`;
 
   return hours
     .slice(0, 12)

@@ -27,13 +27,12 @@ export function getCachedForecast(
 export function saveForecast(
   location: SelectedLocation,
   forecast: HourlyWeather[],
-  options: { phrase?: string; now?: number; storage?: Storage } = {},
+  options: { now?: number; storage?: Storage } = {},
 ): WeatherCache {
   const cache = {
     locationKey: location.key,
     fetchedAt: options.now ?? Date.now(),
     forecast,
-    phrase: options.phrase,
   };
 
   writeWeatherCache(cache, options.storage);

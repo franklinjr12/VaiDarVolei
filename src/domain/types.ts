@@ -44,7 +44,7 @@ export interface VolleyballVerdict {
   score: number;
   phrase: string;
   explanation: string;
-  bestWindow?: {
+  playWindow?: {
     start: Date;
     end: Date;
   };

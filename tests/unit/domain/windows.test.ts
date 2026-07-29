@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { HourScore, HourlyWeather } from "../../../src/domain/types";
-import { findBestWindow, nextPlayableHour } from "../../../src/domain/windows";
+import { currentForecastHour, findCurrentWindow } from "../../../src/domain/windows";
 
-describe("next playable hour", () => {
+describe("current forecast hour", () => {
   it("keeps the current hour when it has just started", () => {
-    expect(nextPlayableHour(new Date("2026-07-28T17:00:00Z")).getUTCHours()).toBe(17);
+    expect(currentForecastHour(new Date("2026-07-28T17:00:00Z")).getUTCHours()).toBe(17);
   });
 
-  it("moves to the next hour once the current hour is underway", () => {
-    expect(nextPlayableHour(new Date("2026-07-28T17:25:00Z")).getUTCHours()).toBe(18);
+  it("keeps the current hour once it is underway", () => {
+    expect(currentForecastHour(new Date("2026-07-28T17:25:00Z")).getUTCHours()).toBe(17);
   });
 });
 
 describe("window selection", () => {
-  it("chooses the highest scoring consecutive window and can extend it", () => {
-    const window = findBestWindow(
+  it("uses the current hour plus the next hour", () => {
+    const window = findCurrentWindow(
       [
         scored("2026-07-28T10:00:00Z", 60),
         scored("2026-07-28T11:00:00Z", 80),
@@ -22,7 +22,7 @@ describe("window selection", () => {
         scored("2026-07-28T13:00:00Z", 85),
         scored("2026-07-28T14:00:00Z", 50),
       ],
-      new Date("2026-07-28T09:30:00Z"),
+      new Date("2026-07-28T12:30:00Z"),
     );
 
     expect(window?.start.getUTCHours()).toBe(12);
@@ -30,26 +30,25 @@ describe("window selection", () => {
     expect(window?.hours).toHaveLength(2);
   });
 
-  it("ignores past hours even when they score better", () => {
-    const window = findBestWindow(
+  it("ignores later hours even when they score better", () => {
+    const window = findCurrentWindow(
       [
-        scored("2026-07-28T12:00:00Z", 100),
-        scored("2026-07-28T13:00:00Z", 100),
-        scored("2026-07-28T14:00:00Z", 100),
-        scored("2026-07-28T16:00:00Z", 70),
-        scored("2026-07-28T17:00:00Z", 75),
+        scored("2026-07-28T14:00:00Z", 50),
+        scored("2026-07-28T15:00:00Z", 55),
+        scored("2026-07-28T16:00:00Z", 100),
+        scored("2026-07-28T17:00:00Z", 100),
       ],
-      new Date("2026-07-28T15:30:00Z"),
+      new Date("2026-07-28T14:25:00Z"),
     );
 
-    expect(window?.start.getUTCHours()).toBe(16);
-    expect(window?.end.getUTCHours()).toBe(18);
+    expect(window?.start.getUTCHours()).toBe(14);
+    expect(window?.averageScore).toBe(53);
   });
 
-  it("returns null when fewer than two consecutive future hours remain", () => {
-    const window = findBestWindow(
-      [scored("2026-07-28T23:00:00Z", 90)],
-      new Date("2026-07-28T22:30:00Z"),
+  it("returns null when the current and next hours are not consecutive", () => {
+    const window = findCurrentWindow(
+      [scored("2026-07-28T14:00:00Z", 90), scored("2026-07-28T16:00:00Z", 90)],
+      new Date("2026-07-28T14:30:00Z"),
     );
 
     expect(window).toBeNull();

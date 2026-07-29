@@ -1,8 +1,8 @@
 # Vai Dar Volei?
 
-Um app estatico e rapido para responder uma pergunta: hoje da para jogar volei de praia?
+Um app estatico e rapido para responder uma pergunta: agora da para jogar volei de praia?
 
-O app usa a previsao horaria da Open-Meteo, avalia chuva, vento, rajadas, sensacao termica e trovoadas, escolhe a melhor janela restante de 2 a 3 horas e devolve um veredito simples: GOOD, MAYBE ou BAD.
+O app usa a previsao horaria da Open-Meteo, avalia chuva, vento, rajadas, sensacao termica e trovoadas nas proximas 2 horas e devolve um veredito simples: GOOD, MAYBE ou BAD.
 
 ![Screenshot do app](public/og-card.svg)
 
@@ -10,7 +10,7 @@ O app usa a previsao horaria da Open-Meteo, avalia chuva, vento, rajadas, sensac
 
 - Localizacao por GPS do navegador ou busca manual de cidade.
 - Cache local de previsao por 1 hora para evitar chamadas repetidas.
-- Recalculo do melhor horario a partir da previsao salva.
+- Recalculo das proximas 2 horas a partir da previsao salva.
 - Fallback para cache antigo quando a rede falha.
 - Frases bem-humoradas em portugues.
 - Detalhes por hora e compartilhamento via Web Share API ou clipboard.
@@ -50,7 +50,7 @@ npx playwright install chromium
 
 Cada hora comeca em 100 pontos. O app aplica penalidades por probabilidade de chuva, precipitacao esperada, vento, rajadas e sensacao termica. Codigos WMO de trovoada 95, 96 e 99 tornam a hora insegura com score 0.
 
-A melhor recomendacao e calculada em janelas consecutivas de 2 horas. Se a hora seguinte tiver pelo menos 60 pontos, a janela pode ser estendida para 3 horas.
+A recomendacao usa a hora atual da previsao e a proxima hora consecutiva, de acordo com o fuso horario do navegador.
 
 ## Cache
 
