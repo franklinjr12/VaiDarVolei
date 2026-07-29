@@ -256,7 +256,7 @@ function renderResult(
 
         ${options.staleWarning ? `<p class="warning" role="status">${escapeHtml(options.staleWarning)}</p>` : ""}
 
-        <p class="verdict-dot" aria-label="${verdict.verdict}">${verdictIcon(verdict.verdict)}</p>
+        <p class="verdict-dot" aria-label="${verdictLabel(verdict.verdict)}">${verdictIcon(verdict.verdict)}</p>
         <h1 id="app-title" class="verdict">${escapeHtml(verdict.phrase)}</h1>
 
         <div class="metric-row" aria-label="Resumo do clima">
@@ -334,7 +334,7 @@ function renderHours(hours: HourScore[]): string {
       (hour) => `
         <article class="hour-card ${hour.rating.toLowerCase()}">
           <strong>${formatHour(hour.hour.timestamp)}</strong>
-          <span>${verdictIcon(hour.rating)} ${hour.rating}</span>
+          <span>${verdictIcon(hour.rating)} ${verdictLabel(hour.rating)}</span>
           <small>${round(hour.hour.temperature)}C · ${round(hour.hour.precipitationProbability)}% chuva</small>
         </article>
       `,
@@ -346,6 +346,12 @@ function verdictIcon(verdict: VolleyballVerdict["verdict"]): string {
   if (verdict === "GOOD") return "🟢";
   if (verdict === "MAYBE") return "🟡";
   return "🔴";
+}
+
+function verdictLabel(verdict: VolleyballVerdict["verdict"]): string {
+  if (verdict === "GOOD") return "BOM";
+  if (verdict === "MAYBE") return "TALVEZ";
+  return "RUIM";
 }
 
 function assetPath(fileName: string): string {
