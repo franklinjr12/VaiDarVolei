@@ -79,11 +79,27 @@ Regras principais:
 
 O projeto esta configurado para GitHub Pages com GitHub Actions em `.github/workflows/pages.yml`.
 
-O build usa `base: "/VaiDarVolei/"`, entao a URL esperada e:
+Por padrao, o build usa `VITE_BASE_PATH=/VaiDarVolei/`, entao a URL esperada e:
 
 ```text
 https://franklinjr12.github.io/VaiDarVolei/
 ```
+
+Para outro servidor, configure `VITE_BASE_PATH` antes do build.
+
+Servidor na raiz do dominio:
+
+```bash
+VITE_BASE_PATH=/ npm run build
+```
+
+Servidor em subpasta:
+
+```bash
+VITE_BASE_PATH=/volei/ npm run build
+```
+
+Depois publique o conteudo de `dist` no seu servidor estatico.
 
 ## Atribuicao
 
